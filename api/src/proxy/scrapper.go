@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// GetProxyConfigs downloads a proxy subscription and returns a list of proxy URLs.
+// * THIS AUTOCOMENT GetProxyConfigs downloads a proxy subscription and returns a list of proxy URLs.
 func GetProxyConfigs(url string) ([]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -24,13 +24,11 @@ func GetProxyConfigs(url string) ([]string, error) {
 	decodedBody, err := base64.StdEncoding.DecodeString(string(body))
 	var content string
 	if err != nil {
-		// Не удалось декодировать, значит, это обычный текст
 		content = string(body)
 	} else {
 		content = string(decodedBody)
 	}
 
-	// Разделяем на строки и убираем пустые
 	lines := strings.Split(content, "\n")
 	var proxies []string
 	for _, line := range lines {

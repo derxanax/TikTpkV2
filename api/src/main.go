@@ -11,7 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
+	"path/filepath" // ! для работы с путями в файловой системе
 	"strconv"
 	"strings"
 	"syscall"
@@ -31,7 +31,6 @@ const xrayExecutablePath = "../bin/xray"
 const xrayConfigPath = "../bin/config.json"
 
 func main() {
-	// 1. Проверяем и если надо, качаем xray
 	if err := ensureXray(); err != nil {
 		log.Fatalf("FATAL: Failed to get xray binary: %v", err)
 	}
@@ -61,7 +60,6 @@ func main() {
 		proxyURL = configs[0]
 	}
 
-	// 2. Запускаем внешний прокси
 	localProxyURL, cleanup, err := startExternalProxy(proxyURL)
 	if err != nil {
 		log.Fatalf("FATAL: failed to start external proxy: %v", err)
@@ -70,7 +68,6 @@ func main() {
 
 	log.Println("Proxy started successfully. Launching browser...")
 
-	// 3. Запускаем браузер через наш прокси
 	browserLauncher := launcher.New().
 		Proxy(localProxyURL).
 		Headless(false).
@@ -83,7 +80,6 @@ func main() {
 	page := browser.MustPage("https://duckduckgo.com").MustWaitStable()
 	log.Printf("Browser opened page: %s", page.MustInfo().Title)
 
-	// 4. Ждем сигнала завершения (Ctrl+C)
 	log.Println("Application is running. Press Ctrl+C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
@@ -99,7 +95,6 @@ func startExternalProxy(proxyFullURL string) (string, func(), error) {
 		return "", nil, fmt.Errorf("invalid proxy URL: %w", err)
 	}
 
-	// 1. Генерим конфиг для Xray
 	listenPort := 10809 // FIXHARDCODE: порт бы тоже свободный искать
 	config := map[string]any{
 		"log": map[string]any{"loglevel": "warning"},
@@ -150,7 +145,6 @@ func startExternalProxy(proxyFullURL string) (string, func(), error) {
 		return "", nil, fmt.Errorf("failed to write xray config: %w", err)
 	}
 
-	// 2. Запускаем xray
 	cmd := exec.Command(xrayExecutablePath, "-c", xrayConfigPath)
 	cmd.Stderr = os.Stderr // чтоб видеть ошибки от xray
 	cmd.Stdout = os.Stdout // и его выхлоп
@@ -171,7 +165,6 @@ func startExternalProxy(proxyFullURL string) (string, func(), error) {
 		os.Remove(xrayConfigPath)
 	}
 
-	// 3. Возвращаем URL прокси для rod
 	return fmt.Sprintf("http://127.0.0.1:%d", listenPort), cleanup, nil
 }
 
